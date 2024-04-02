@@ -1,0 +1,12 @@
+-f https://download.pytorch.org/whl/torch_stable.html
+
+#torch==2.2.0+cpu
+#intel-extension-for-pytorch
+
+intel-openmp
+accelerate
+diffusers
+transformers
+#gradio
+mkl
+
