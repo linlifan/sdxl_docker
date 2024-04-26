@@ -1,4 +1,3 @@
-
 step 0: download SDXL Turbo model from huggingface
         mkdir models
         pip install -U huggingface_hub hf_transfer 
