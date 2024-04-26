@@ -2,7 +2,7 @@
 step 0: download SDXL Turbo model from huggingface
         mkdir models
         pip install -U huggingface_hub hf_transfer 
-        HF_ENDPOINT=https://hf-mirror.com HF_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download --resume-download stabilityai/sdxl-turbo  --local-dir sdxl-turbo
+        HF_ENDPOINT=https://hf-mirror.com HF_HUB_ENABLE_HF_TRANSFER=1 huggingface-cli download --resume-download stabilityai/sdxl-turbo  --local-dir sdxl-turbo --local-dir-use-symlinks False 
 
 step 1: build docker image
        docker build --build-arg HTTP_PROXY=$http_proxy --build-arg HTTPS_PROXY=$https_proxy    -t sdxl:v1 .

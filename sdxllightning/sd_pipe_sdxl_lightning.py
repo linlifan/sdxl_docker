@@ -3,7 +3,7 @@ from diffusers.utils import make_image_grid
 
 import sys
 
-#from pipeline_stable_diffusion_xl_ipex import StableDiffusionXLPipelineIpex
+
 
 import argparse
 import time
@@ -22,16 +22,11 @@ def get_host_memory():
     memory_allocated = round(psutil.Process().memory_info().rss / 1024**3, 3)
     print("cpu"," memory used total: ", memory_allocated, "GB")
 
-# model_id = "/home/una/hf_models/sdxl-turbo"
 
-base = "/home/models/HF_models/stable-diffusion-xl-base-1.0/"
-repo = "/home/models/HF_models/SDXL-Lightning/"
+base = "/home/models/stable-diffusion-xl-base-1.0/"
+repo = "/home/models/SDXL-Lightning/"
 # ckpt = "sdxl_lightning_4step_lora.safetensors" # Use the correct ckpt for your step setting!
 ckpt = "sdxl_lightning_4step_unet.safetensors"
-
-# Load model.
-unet = UNet2DConditionModel.from_config(base, subfolder="unet")
-unet.load_state_dict(load_file(f"{repo}{ckpt}", device="cpu"))
 
 if __name__ == '__main__':
 
@@ -48,27 +43,19 @@ if __name__ == '__main__':
     
     prompt = args.batch * [args.prompt]
     
-    #scheduler = DPMSolverMultistepScheduler.from_pretrained(model_id, subfolder="scheduler")
-    #scheduler = EulerDiscreteScheduler.from_pretrained(model_id, subfolder="scheduler")
-    #pipe = StableDiffusionXLPipelineIpex.from_pretrained(model_id, scheduler = scheduler, use_auth_token=True, low_cpu_mem_usage=True, use_safetensors = True, safety_checker = None)
-    # pipe = StableDiffusionXLPipelineIpex.from_pretrained(model_id, use_auth_token=True, low_cpu_mem_usage=True, use_safetensors = True, safety_checker = None)
     torchdtype = torch.bfloat16 if args.bf16 else torch.float32
     variant = "bf16" if args.bf16 else "fp32"
+    
+    # Load model.
+    unet = UNet2DConditionModel.from_config(base, subfolder="unet")
+    unet.load_state_dict(load_file(f"{repo}{ckpt}", device="cpu"))
+
 
     # original pipe
     # pipe = StableDiffusionXLPipeline.from_pretrained(base, unet=unet, torch_dtype=torchdtype, variant=variant)
     # optimized pipe
-    '''
-    pipe = StableDiffusionXLPipelineIpex.from_pretrained(
-            base, unet=unet, torch_dtype=torchdtype, variant=variant,
-            use_auth_token=True, 
-            low_cpu_mem_usage=True, 
-            use_safetensors = True, 
-            safety_checker = None)
-    '''
-
     pipe = StableDiffusionXLPipeline.from_pretrained(
-            base, unet=unet, torch_dtype=torchdtype, variant=variant,
+            base, unet=unet, torch_dtype=torchdtype,
             use_auth_token=True, 
             low_cpu_mem_usage=True, 
             use_safetensors = True, 
@@ -79,14 +66,14 @@ if __name__ == '__main__':
     get_host_memory()
     
     data_type = torch.bfloat16 if args.bf16 else torch.float32
-    # data_type = torch.float32 if args.bf16 else torch.float32
+    
     pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config, timestep_spacing="trailing")
     
     pipe.prepare_for_ipex(data_type, prompt, height=args.height, width=args.width, guidance_scale=0.0)
 
     get_host_memory()
     
-    generator = torch.Generator(device).manual_seed(4)
+    #generator = torch.Generator(device).manual_seed(4)
     with torch.no_grad(), torch.cpu.amp.autocast(enabled=args.bf16, dtype=torch.bfloat16):
         if profile > 0:
             with torch.profiler.profile(
@@ -114,7 +101,7 @@ if __name__ == '__main__':
             for i in range(args.repeat):
                 print('')
                 t1 = time.time()
-                image = pipe(prompt, num_inference_steps=inference_step, height=args.height, width=args.width, guidance_scale=0.0, generator = generator)
+                image = pipe(prompt, num_inference_steps=inference_step, height=args.height, width=args.width, guidance_scale=0.0) #, generator = generator)
                 t2 = time.time()
             
                 print('SDXL-Lightning inference latency: {:.3f} sec'.format(t2-t1))

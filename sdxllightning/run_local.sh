@@ -1,4 +1,4 @@
-ENV_PATH=/root/miniconda3/envs/ipex_dev
+ENV_PATH=/home/conda/envs/sdxl_turbo
 #
 export MKL_VERBOSE=0
 export KMP_BLOCKTIME=0
@@ -47,4 +47,4 @@ PROMPT="A blue robot is fighting with a red robot. highly detailed, 8k"
 #numactl --localalloc --physcpubind=48-71 python sd_pipe_sdxl_lightning.py --height 1024 --width 1024  --repeat 11 --bf16 --step 4 --prompt "$PROMPT" &
 #numactl --localalloc --physcpubind=72-95 python sd_pipe_sdxl_lightning.py --height 1024 --width 1024  --repeat 40 --bf16 --step 4 --prompt "$PROMPT"
 
-numactl -C 48-95 python sd_pipe_sdxl_lightning.py --height 832 --width 1152 --repeat 4 --bf16 --step 4 --prompt "$PROMPT"
+numactl -C 60-89 python sd_pipe_sdxl_lightning.py --height 832 --width 1152 --repeat 8 --bf16 --step 4 --prompt "$PROMPT"
